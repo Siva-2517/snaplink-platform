@@ -1,0 +1,57 @@
+# ========================
+# Dependencies
+# ========================
+node_modules/
+client/node_modules/
+server/node_modules/
+package-lock.json.backup
+
+# ========================
+# Environment variables
+# ========================
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+server/.env
+server/.env.local
+
+# ========================
+# Build outputs
+# ========================
+client/dist/
+client/build/
+client/out/
+dist/
+build/
+out/
+
+# ========================
+# Logs
+# ========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ========================
+# System & IDE Configs
+# ========================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.gemini/
+antigravity-ide/
+*.tmp
+*.bak
+
+implementation_plan.md

@@ -1,0 +1,113 @@
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useState, useEffect, useContext } from 'react';
+
+const AuthContext = createContext(null);
+
+export const API_BASE = 'http://localhost:5000/api';
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Check for active token on mount
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const savedToken = localStorage.getItem('token');
+      if (savedToken) {
+        try {
+          const response = await fetch(`${API_BASE}/auth/me`, {
+            headers: {
+              'Authorization': `Bearer ${savedToken}`
+            }
+          });
+          const data = await response.json();
+
+          if (data.success) {
+            setUser(data.user);
+            setToken(savedToken);
+          } else {
+            // Token is invalid/expired
+            localStorage.removeItem('token');
+          }
+        } catch (error) {
+          console.error('Failed to restore authentication session:', error);
+          localStorage.removeItem('token');
+        }
+      }
+      setLoading(false);
+    };
+
+    initializeAuth();
+  }, []);
+
+  const login = async (email, password) => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        localStorage.setItem('token', data.token);
+        setToken(data.token);
+        setUser(data.user);
+        return { success: true, message: data.message || 'Logged in!' };
+      } else {
+        return { success: false, message: data.message || 'Invalid credentials' };
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, message: 'Network connection failed. Is the server running?' };
+    }
+  };
+
+  const signup = async (username, email, password) => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, email, password })
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        localStorage.setItem('token', data.token);
+        setToken(data.token);
+        setUser(data.user);
+        return { success: true, message: data.message || 'Account created!' };
+      } else {
+        return { success: false, message: data.message || 'Sign up failed' };
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      return { success: false, message: 'Network connection failed. Is the server running?' };
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, token, loading, isAuthenticated: !!user, login, signup, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
