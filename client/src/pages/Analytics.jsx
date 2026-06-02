@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth, API_BASE } from '../context/AuthContext';
+import { useAuth, API_BASE, BACKEND_BASE } from '../context/AuthContext';
 
 const Analytics = ({ urls = [], loading = true }) => {
   const { token } = useAuth();
@@ -425,7 +425,7 @@ const Analytics = ({ urls = [], loading = true }) => {
                 <tbody>
                   {topLinks.map(link => {
                     const isLinkExpired = link.expiresAt && new Date(link.expiresAt) < new Date();
-                    const linkBaseUrl = window.location.port === '5173' ? 'http://localhost:5000' : `${window.location.protocol}//${window.location.host}`;
+                    const linkBaseUrl = BACKEND_BASE;
                     const displayShort = `${linkBaseUrl.replace('http://','').replace('https://','')}/${link.shortCode}`;
                     
                     return (
@@ -644,7 +644,7 @@ const Analytics = ({ urls = [], loading = true }) => {
                   <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center', padding: '2rem 0' }}>No incoming traffic captured yet</span>
                 ) : (
                   recentVisits.map(log => {
-                    const baseUrl = window.location.port === '5173' ? 'http://localhost:5000' : `${window.location.protocol}//${window.location.host}`;
+                    const baseUrl = BACKEND_BASE;
                     const displayCode = log.shortUrl?.shortCode || 'link';
                     
                     return (

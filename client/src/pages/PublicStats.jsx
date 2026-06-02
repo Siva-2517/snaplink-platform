@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { API_BASE } from '../context/AuthContext';
+import { API_BASE, BACKEND_BASE } from '../context/AuthContext';
 
 const PublicStats = ({ shortCode, onBack }) => {
   const [stats, setStats] = useState(null);
@@ -65,7 +65,7 @@ const PublicStats = ({ shortCode, onBack }) => {
     );
   }
 
-  const baseUrl = window.location.port === '5173' ? 'http://localhost:5000' : `${window.location.protocol}//${window.location.host}`;
+  const baseUrl = BACKEND_BASE;
 
   return (
     <div className="public-stats-page">

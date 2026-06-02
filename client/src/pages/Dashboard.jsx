@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useAuth, API_BASE } from '../context/AuthContext';
+import { useAuth, API_BASE, BACKEND_BASE } from '../context/AuthContext';
 
 const Dashboard = ({ urls = [], loading = true, setUrls, searchQuery, setSearchQuery }) => {
   const { token } = useAuth();
@@ -85,7 +85,7 @@ const Dashboard = ({ urls = [], loading = true, setUrls, searchQuery, setSearchQ
 
   // Copy Short Link to clipboard
   const handleCopyLink = (code) => {
-    const baseUrl = window.location.port === '5173' ? 'http://localhost:5000' : `${window.location.protocol}//${window.location.host}`;
+    const baseUrl = BACKEND_BASE;
     const shortLink = `${baseUrl}/${code}`;
     
     navigator.clipboard.writeText(shortLink);
@@ -556,7 +556,7 @@ const Dashboard = ({ urls = [], loading = true, setUrls, searchQuery, setSearchQ
           <div className="links-grid">
             {filteredUrls.map(url => {
               const isExpired = url.expiresAt && new Date(url.expiresAt) < new Date();
-              const baseUrl = window.location.port === '5173' ? 'http://localhost:5000' : `${window.location.protocol}//${window.location.host}`;
+              const baseUrl = BACKEND_BASE;
               
               return (
                 <div key={url._id} className="link-card">

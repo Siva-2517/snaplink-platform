@@ -5,6 +5,8 @@ const cacheManager = require('../utils/cache');
 const analyticsBuffer = require('../utils/buffer');
 const { parseUserAgent } = require('../utils/ua');
 
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+
 // @desc    Perform ultra-fast server-side redirect
 // @route   GET /:shortCode
 // @access  Public
@@ -61,7 +63,7 @@ router.get('/:shortCode', async (req, res) => {
           <h1>404</h1>
           <h2>Oops! Link Active State Error</h2>
           <p>The shortened link you are trying to visit does not exist or has been disabled.</p>
-          <a href="/">Create Your Own URL</a>
+          <a href="${CLIENT_URL}">Create Your Own URL</a>
         </body>
         </html>
       `);
@@ -86,7 +88,7 @@ router.get('/:shortCode', async (req, res) => {
           <h1>410</h1>
           <h2>This Link Has Expired</h2>
           <p>The expiration date set for this link has passed. It is no longer redirecting visitors.</p>
-          <a href="/">Create a New Link</a>
+          <a href="${CLIENT_URL}">Create a New Link</a>
         </body>
         </html>
       `);

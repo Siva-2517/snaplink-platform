@@ -16,8 +16,9 @@ const PORT = process.env.PORT || 5000;
 connectDB();
 
 // Global Middlewares
+const corsOrigin = process.env.CLIENT_URL || '*';
 app.use(cors({
-  origin: '*', // Allow connections from any origin for ease of local testing
+  origin: corsOrigin,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));

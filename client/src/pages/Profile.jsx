@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth, API_BASE } from '../context/AuthContext';
+import { useAuth, API_BASE, BACKEND_BASE } from '../context/AuthContext';
 
 const Profile = ({ onBackToDashboard }) => {
   const { user, token, logout } = useAuth();
@@ -208,13 +208,13 @@ const Profile = ({ onBackToDashboard }) => {
                       <h4 className="link-title">{topLink.title}</h4>
                       <span className="link-destination" style={{ maxWidth: '100%', whiteSpace: 'normal', wordBreak: 'break-all', overflowWrap: 'break-word', display: 'block' }}>{topLink.longUrl}</span>
                       <a 
-                        href={`http://localhost:5000/${topLink.shortCode}`} 
+                        href={`${BACKEND_BASE}/${topLink.shortCode}`} 
                         target="_blank" 
                         rel="noreferrer" 
                         className="short-anchor"
                         style={{ marginTop: '0.4rem', display: 'inline-block' }}
                       >
-                        localhost:5000/{topLink.shortCode}
+                        {BACKEND_BASE.replace('http://', '').replace('https://', '')}/{topLink.shortCode}
                       </a>
                     </div>
                     <div className="box-click-badge">
