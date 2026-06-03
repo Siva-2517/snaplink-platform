@@ -28,8 +28,13 @@ const parseUserAgent = (req) => {
   else if (/safari/i.test(ua) && !/chrome/i.test(ua)) browser = 'Safari';
 
   // 4. Generate a stable, realistic country based on IP Address or accept-language
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
-  let country = 'Localhost';
+const rawIp =
+  req.headers['x-forwarded-for'] ||
+  req.ip ||
+  req.socket.remoteAddress ||
+  '127.0.0.1';
+
+  const ip = rawIp.split(',')[0].trim();  let country = 'Localhost';
 
   if (ip !== '127.0.0.1' && ip !== '::1' && ip !== '::ffff:127.0.0.1') {
     const countries = ['United States', 'India', 'United Kingdom', 'Germany', 'Canada', 'France', 'Japan', 'Singapore', 'Australia', 'Brazil'];
