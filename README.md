@@ -86,8 +86,8 @@ Launch both the **Express Server** and the **Vite React Frontend** concurrently:
 npm run dev
 ```
 
-- **Frontend Application**: Running at [http://localhost:5173]([http://localhost:5173](https://snaplink-platform.vercel.app))
-- **Backend Rest APIs**: Running at [http://localhost:5000](https://snaplink-platform.onrender.com/api)
+- **Frontend Application**: Running at [https://snaplink-platform.vercel.app]
+- **Backend Rest APIs**: Running at [[https://snaplink-platform.onrender.com/api]]
 
 ---
 
