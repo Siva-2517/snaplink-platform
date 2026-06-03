@@ -45,7 +45,6 @@ The application was designed and built following a structured 5-phase AI-driven 
    - Implemented `express-rate-limit` to prevent brute force attacks.
    - Enforced soft deletes to preserve historical user analytics while deprecating redirection endpoints for deleted URLs.
 
-*For the complete code-level design, database schemas, and API definitions, refer to the [detailed implementation plan](file:///d:/URL%20Shortner/implementation_plan.md).*
 
 ---
 
