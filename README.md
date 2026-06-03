@@ -25,6 +25,30 @@ Instead of executing a database insert for every redirect, click analytics are a
 
 ---
 
+## 📋 AI Planning Document
+
+The application was designed and built following a structured 5-phase AI-driven development roadmap:
+
+1. **Phase 1: Requirement Analysis & Database Design**
+   - Outlined core CRUD requirements for URL shortening, custom alias support, and user authentication.
+   - Designed a schema in MongoDB using Mongoose with three collections: `User`, `ShortURL` (with indices on `shortCode` and `customAlias`), and `Visit` (to capture analytics).
+2. **Phase 2: Core API & Authentication Setup**
+   - Built the Express backend with structured JWT-based user authentication and token verification middleware.
+   - Standardized error handling, input validation, and security sanitization (restricting protocols to HTTP/HTTPS).
+3. **Phase 3: High-Performance Optimizations**
+   - Integrated Redis caching to bypass database queries for hot paths, with an automatic fallback to in-memory local caching (JS Map) if Redis is unavailable.
+   - Planned and implemented an asynchronous redirection path that logs visitor analytics in a memory buffer, flushing writes to MongoDB in bulk every 5 seconds to prevent database locks.
+4. **Phase 4: Responsive Frontend & Dashboard**
+   - Designed a premium glassmorphic dark UI dashboard in React (Vite).
+   - Engineered native SVG analytics charts, custom dialogs, copy-to-clipboard feedback, and a dynamic QR Code generator.
+5. **Phase 5: Verification & Safety Guards**
+   - Implemented `express-rate-limit` to prevent brute force attacks.
+   - Enforced soft deletes to preserve historical user analytics while deprecating redirection endpoints for deleted URLs.
+
+*For the complete code-level design, database schemas, and API definitions, refer to the [detailed implementation plan](file:///d:/URL%20Shortner/implementation_plan.md).*
+
+---
+
 ## 📡 Architecture Diagram
 
 ```mermaid
