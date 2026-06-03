@@ -76,7 +76,7 @@ graph TD
 
 ## 🚀 Step-by-Step Setup Guide
 
-### Prerequisites
+### Prerequisites 
 Make sure you have the following installed on your machine:
 - **Node.js** (v18.x or newer - *v22.19.0 recommended*)
 - **NPM** (v9.x or newer)
