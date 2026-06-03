@@ -215,6 +215,31 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = async (googleToken) => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ token: googleToken })
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        localStorage.setItem('token', data.token);
+        setToken(data.token);
+        setUser(data.user);
+        return { success: true, message: data.message || 'Logged in with Google!' };
+      } else {
+        return { success: false, message: data.message || 'Google Login failed.' };
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      return { success: false, message: 'Network connection failed.' };
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setToken(null);
@@ -235,7 +260,8 @@ export const AuthProvider = ({ children }) => {
       resetPassword, 
       logout,
       updateUsername,
-      updatePassword
+      updatePassword,
+      loginWithGoogle
     }}>
       {children}
     </AuthContext.Provider>

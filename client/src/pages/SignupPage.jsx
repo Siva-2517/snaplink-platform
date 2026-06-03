@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { GoogleLogin } from '@react-oauth/google';
+import { useTheme } from '../context/ThemeContext';
 
 const SignupPage = () => {
-  const { signup, isAuthenticated } = useAuth();
+  const { signup, isAuthenticated, loginWithGoogle } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
 
   const [username, setUsername] = useState('');
@@ -28,6 +31,31 @@ const SignupPage = () => {
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setErrorMessage('');
+    setSuccessMessage('');
+    setSubmitting(true);
+    try {
+      const res = await loginWithGoogle(credentialResponse.credential);
+      if (res.success) {
+        setSuccessMessage(res.message);
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1000);
+      } else {
+        setErrorMessage(res.message);
+      }
+    } catch {
+      setErrorMessage('Google Authentication failed.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setErrorMessage('Google Sign-In was cancelled or failed.');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -180,6 +208,24 @@ const SignupPage = () => {
               'Sign Up Free'
             )}
           </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', margin: '1.5rem 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+            <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.08)' }}></div>
+            <span style={{ padding: '0 0.75rem' }}>or continue with</span>
+            <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.08)' }}></div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+            <GoogleLogin
+              key={theme}
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              theme={theme === 'dark' ? 'filled_black' : 'outline'}
+              shape="pill"
+              text="signup_with"
+              width="100%"
+            />
+          </div>
         </form>
 
         <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>

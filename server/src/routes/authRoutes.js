@@ -9,7 +9,8 @@ const {
   resetPassword,
   getMe,
   updateUsername,
-  updatePassword
+  updatePassword,
+  googleLogin
 } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 const { authLimiter } = require('../middleware/rateLimiter');
@@ -28,6 +29,7 @@ router.post('/verify-otp', authLimiter, validateVerifyOtpInput, verifyOtp);
 router.post('/resend-otp', authLimiter, validateResendOtpInput, resendOtp);
 router.post('/forgot-password', authLimiter, validateForgotPasswordInput, forgotPassword);
 router.post('/reset-password', authLimiter, validateResetPasswordInput, resetPassword);
+router.post('/google', authLimiter, googleLogin);
 router.get('/me', protect, getMe);
 router.put('/update-username', protect, authLimiter, validateUpdateUsernameInput, updateUsername);
 router.put('/update-password', protect, authLimiter, validateUpdatePasswordInput, updatePassword);

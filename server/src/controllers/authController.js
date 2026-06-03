@@ -2,6 +2,10 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const emailService = require('../services/emailService');
+const { OAuth2Client } = require('google-auth-library');
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
 
 // Helper to generate a 6-digit random code
 const generateOTP = () => {
@@ -89,6 +93,13 @@ const login = async (req, res) => {
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+    }
+
+    if (user.provider === 'google') {
+      return res.status(403).json({
+        success: false,
+        message: 'This account is registered with Google. Please use Google Login.'
+      });
     }
 
     // FEATURE 4: LOGIN PROTECTION
@@ -418,6 +429,86 @@ const updatePassword = async (req, res) => {
   }
 };
 
+// @desc    Log in / Sign up with Google OAuth
+// @route   POST /api/auth/google
+// @access  Public
+const googleLogin = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ success: false, message: 'Google ID token is required.' });
+    }
+
+    let payload;
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: token,
+        audience: process.env.GOOGLE_CLIENT_ID
+      });
+      payload = ticket.getPayload();
+    } catch (err) {
+      console.error('Google token verification failed:', err);
+      return res.status(400).json({ success: false, message: 'Invalid Google ID token.' });
+    }
+
+    const { email, name, sub } = payload;
+
+    // Find user by email (case-insensitive)
+    let user = await User.findOne({ email: email.toLowerCase() });
+
+    if (user) {
+      // If user exists, check if they have googleId set
+      if (!user.googleId) {
+        user.googleId = sub;
+        await user.save();
+      }
+    } else {
+      // Create new Google user
+      // Clean name for username (only alphanumeric, dashes, and underscores)
+      let baseUsername = name.replace(/[^a-zA-Z0-9-_]/g, '_');
+      if (baseUsername.length < 3) {
+        baseUsername = 'google_user_' + sub.slice(-5);
+      }
+      if (baseUsername.length > 20) {
+        baseUsername = baseUsername.slice(0, 20);
+      }
+
+      let username = baseUsername;
+      let suffix = 1;
+      // Guarantee unique username
+      while (await User.findOne({ username })) {
+        username = `${baseUsername.slice(0, 16)}_${suffix}`;
+        suffix++;
+      }
+
+      user = await User.create({
+        username,
+        email: email.toLowerCase(),
+        provider: 'google',
+        googleId: sub,
+        isVerified: true // Google emails are pre-verified
+      });
+    }
+
+    const jwtToken = generateToken(user._id);
+
+    return res.json({
+      success: true,
+      message: 'Logged in successfully with Google!',
+      token: jwtToken,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email
+      }
+    });
+  } catch (error) {
+    console.error('Google Auth Error:', error);
+    return res.status(500).json({ success: false, message: 'Server error during Google Authentication.' });
+  }
+};
+
 module.exports = {
   signup,
   login,
@@ -427,5 +518,6 @@ module.exports = {
   resetPassword,
   getMe,
   updateUsername,
-  updatePassword
+  updatePassword,
+  googleLogin
 };
