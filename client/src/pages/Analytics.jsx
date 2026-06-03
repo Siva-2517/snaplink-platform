@@ -8,6 +8,9 @@ const Analytics = ({ urls = [], loading = true }) => {
   const [dbDevices, setDbDevices] = useState([]);
   const [dbOS, setDbOS] = useState([]);
   const [dbCountries, setDbCountries] = useState([]);
+  const [dbTrends, setDbTrends] = useState(null);
+  const [uniqueVisitorsCount, setUniqueVisitorsCount] = useState(0);
+  const [countriesCountState, setCountriesCountState] = useState(0);
   const [visitsLoading, setVisitsLoading] = useState(true);
 
   useEffect(() => {
@@ -26,6 +29,9 @@ const Analytics = ({ urls = [], loading = true }) => {
           setDbDevices(data.devices || []);
           setDbOS(data.osList || []);
           setDbCountries(data.countries || []);
+          setDbTrends(data.trends || null);
+          setUniqueVisitorsCount(data.uniqueVisitorsCount || 0);
+          setCountriesCountState(data.countriesCount || 0);
         }
       } catch (error) {
         console.error('Error fetching global recent visits:', error);
@@ -42,40 +48,50 @@ const Analytics = ({ urls = [], loading = true }) => {
 
   // Perform high-fidelity calculations
   const totalClicks = urls.reduce((acc, curr) => acc + curr.clicks, 0);
-  const uniqueVisitors = Math.round(totalClicks * 0.82);
+  const uniqueVisitors = uniqueVisitorsCount;
   const activeLinks = urls.filter(u => !u.expiresAt || new Date(u.expiresAt) > new Date()).length;
   const avgClicks = urls.length > 0 ? (totalClicks / urls.length).toFixed(1) : '0.0';
-  const countriesCount = totalClicks > 0 ? Math.min(Math.ceil(totalClicks / 2) + 1, 9) : 0;
+  const countriesCount = countriesCountState;
   const linkHealthScore = urls.length > 0 ? Math.round((activeLinks / urls.length) * 100) : 100;
 
   // Chart data selection based on timeframe
   let chartData = [];
-  if (analyticsTimeframe === 'daily') {
-    chartData = [
-      { label: 'Mon', value: Math.round(totalClicks * 0.12) },
-      { label: 'Tue', value: Math.round(totalClicks * 0.18) },
-      { label: 'Wed', value: Math.round(totalClicks * 0.10) },
-      { label: 'Thu', value: Math.round(totalClicks * 0.22) },
-      { label: 'Fri', value: Math.round(totalClicks * 0.15) },
-      { label: 'Sat', value: Math.round(totalClicks * 0.11) },
-      { label: 'Sun', value: Math.round(totalClicks * 0.12) },
-    ];
-  } else if (analyticsTimeframe === 'weekly') {
-    chartData = [
-      { label: 'Week 1', value: Math.round(totalClicks * 0.20) },
-      { label: 'Week 2', value: Math.round(totalClicks * 0.25) },
-      { label: 'Week 3', value: Math.round(totalClicks * 0.35) },
-      { label: 'Week 4', value: Math.round(totalClicks * 0.20) },
-    ];
+  if (dbTrends) {
+    if (analyticsTimeframe === 'daily') {
+      chartData = dbTrends.daily || [];
+    } else if (analyticsTimeframe === 'weekly') {
+      chartData = dbTrends.weekly || [];
+    } else {
+      chartData = dbTrends.monthly || [];
+    }
   } else {
-    chartData = [
-      { label: 'Jan-Feb', value: Math.round(totalClicks * 0.15) },
-      { label: 'Mar-Apr', value: Math.round(totalClicks * 0.22) },
-      { label: 'May-Jun', value: Math.round(totalClicks * 0.28) },
-      { label: 'Jul-Aug', value: Math.round(totalClicks * 0.18) },
-      { label: 'Sep-Oct', value: Math.round(totalClicks * 0.12) },
-      { label: 'Nov-Dec', value: Math.round(totalClicks * 0.05) },
-    ];
+    if (analyticsTimeframe === 'daily') {
+      chartData = [
+        { label: 'Mon', value: 0 },
+        { label: 'Tue', value: 0 },
+        { label: 'Wed', value: 0 },
+        { label: 'Thu', value: 0 },
+        { label: 'Fri', value: 0 },
+        { label: 'Sat', value: 0 },
+        { label: 'Sun', value: 0 },
+      ];
+    } else if (analyticsTimeframe === 'weekly') {
+      chartData = [
+        { label: 'Week 1', value: 0 },
+        { label: 'Week 2', value: 0 },
+        { label: 'Week 3', value: 0 },
+        { label: 'Week 4', value: 0 },
+      ];
+    } else {
+      chartData = [
+        { label: 'Jan', value: 0 },
+        { label: 'Feb', value: 0 },
+        { label: 'Mar', value: 0 },
+        { label: 'Apr', value: 0 },
+        { label: 'May', value: 0 },
+        { label: 'Jun', value: 0 },
+      ];
+    }
   }
 
   // Top countries distribution (dynamic)
@@ -104,13 +120,7 @@ const Analytics = ({ urls = [], loading = true }) => {
     flag: getFlag(c.name),
     count: c.count,
     percent: Math.round((c.count / totalGeoClicks) * 100)
-  })) : [
-    { name: 'India', flag: '🇮🇳', count: 0, percent: 0 },
-    { name: 'USA', flag: '🇺🇸', count: 0, percent: 0 },
-    { name: 'UK', flag: '🇬🇧', count: 0, percent: 0 },
-    { name: 'Germany', flag: '🇩🇪', count: 0, percent: 0 },
-    { name: 'Singapore', flag: '🇸🇬', count: 0, percent: 0 },
-  ];
+  })) : [];
 
   // Visitor specs calculations
   const totalDevices = dbDevices.reduce((acc, curr) => acc + curr.count, 0) || 1;
@@ -118,31 +128,31 @@ const Analytics = ({ urls = [], loading = true }) => {
     const found = dbDevices.find(d => d.name.toLowerCase() === name.toLowerCase());
     return found ? Math.round((found.count / totalDevices) * 100) : 0;
   };
-  const desktopPercent = dbDevices.length > 0 ? getDevicePercent('Desktop') : 55;
-  const mobilePercent = dbDevices.length > 0 ? getDevicePercent('Mobile') : 35;
-  const tabletPercent = dbDevices.length > 0 ? getDevicePercent('Tablet') : 10;
+  const desktopPercent = dbDevices.length > 0 ? getDevicePercent('Desktop') : 0;
+  const mobilePercent = dbDevices.length > 0 ? getDevicePercent('Mobile') : 0;
+  const tabletPercent = dbDevices.length > 0 ? getDevicePercent('Tablet') : 0;
 
   const totalBrowsers = dbBrowsers.reduce((acc, curr) => acc + curr.count, 0) || 1;
   const getBrowserPercent = (name) => {
     const found = dbBrowsers.find(b => b.name.toLowerCase() === name.toLowerCase());
     return found ? Math.round((found.count / totalBrowsers) * 100) : 0;
   };
-  const chromePercent = dbBrowsers.length > 0 ? getBrowserPercent('Chrome') : 62;
-  const safariPercent = dbBrowsers.length > 0 ? getBrowserPercent('Safari') : 18;
-  const edgePercent = dbBrowsers.length > 0 ? getBrowserPercent('Edge') : 11;
-  const firefoxPercent = dbBrowsers.length > 0 ? getBrowserPercent('Firefox') : 6;
-  const othersPercent = dbBrowsers.length > 0 ? Math.max(0, 100 - (chromePercent + safariPercent + edgePercent + firefoxPercent)) : 3;
+  const chromePercent = dbBrowsers.length > 0 ? getBrowserPercent('Chrome') : 0;
+  const safariPercent = dbBrowsers.length > 0 ? getBrowserPercent('Safari') : 0;
+  const edgePercent = dbBrowsers.length > 0 ? getBrowserPercent('Edge') : 0;
+  const firefoxPercent = dbBrowsers.length > 0 ? getBrowserPercent('Firefox') : 0;
+  const othersPercent = dbBrowsers.length > 0 ? Math.max(0, 100 - (chromePercent + safariPercent + edgePercent + firefoxPercent)) : 0;
 
   const totalOS = dbOS.reduce((acc, curr) => acc + curr.count, 0) || 1;
   const getOSPercent = (name) => {
     const found = dbOS.find(o => o.name.toLowerCase() === name.toLowerCase());
     return found ? Math.round((found.count / totalOS) * 100) : 0;
   };
-  const windowsPercent = dbOS.length > 0 ? getOSPercent('Windows') : 48;
-  const iosPercent = dbOS.length > 0 ? getOSPercent('iOS') : 22;
-  const androidPercent = dbOS.length > 0 ? getOSPercent('Android') : 16;
-  const macosPercent = dbOS.length > 0 ? getOSPercent('macOS') : 10;
-  const linuxPercent = dbOS.length > 0 ? getOSPercent('Linux') : 4;
+  const windowsPercent = dbOS.length > 0 ? getOSPercent('Windows') : 0;
+  const iosPercent = dbOS.length > 0 ? getOSPercent('iOS') : 0;
+  const androidPercent = dbOS.length > 0 ? getOSPercent('Android') : 0;
+  const macosPercent = dbOS.length > 0 ? getOSPercent('macOS') : 0;
+  const linuxPercent = dbOS.length > 0 ? getOSPercent('Linux') : 0;
 
   // Top Performing Links selection
   const topLinks = [...urls].sort((a, b) => {
@@ -378,20 +388,26 @@ const Analytics = ({ urls = [], loading = true }) => {
               </span>
 
               <div className="geo-distribution-wrapper">
-                {geoCountries.map(country => (
-                  <div key={country.name} className="geo-row">
-                    <div className="geo-label-bar">
-                      <span className="country-name-badge">
-                        <span>{country.flag}</span>
-                        <span>{country.name}</span>
-                      </span>
-                      <span className="geo-clicks-value">{country.count} clicks ({country.percent}%)</span>
+                {geoCountries.length === 0 ? (
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center', display: 'block', padding: '1rem 0' }}>
+                    No geographic traffic data logged yet
+                  </span>
+                ) : (
+                  geoCountries.map(country => (
+                    <div key={country.name} className="geo-row">
+                      <div className="geo-label-bar">
+                        <span className="country-name-badge">
+                          <span>{country.flag}</span>
+                          <span>{country.name}</span>
+                        </span>
+                        <span className="geo-clicks-value">{country.count} clicks ({country.percent}%)</span>
+                      </div>
+                      <div className="geo-bar-track">
+                        <div className="geo-bar-fill" style={{ width: `${country.percent}%` }}></div>
+                      </div>
                     </div>
-                    <div className="geo-bar-track">
-                      <div className="geo-bar-fill" style={{ width: `${country.percent}%` }}></div>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </div>

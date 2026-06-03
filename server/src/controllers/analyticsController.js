@@ -145,13 +145,80 @@ const getGlobalRecentVisits = async (req, res) => {
       { $limit: 5 }
     ]);
 
+    // 7. Calculate daily clicks trends for the last 7 days
+    const dailyTrends = [];
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+      
+      const count = await Visit.countDocuments({
+        shortUrl: { $in: urlIds },
+        timestamp: { $gte: start, $lt: end }
+      });
+      
+      dailyTrends.push({
+        label: days[d.getDay()],
+        value: count
+      });
+    }
+
+    // 8. Calculate weekly clicks trends for the last 4 weeks
+    const weeklyTrends = [];
+    for (let i = 3; i >= 0; i--) {
+      const start = new Date();
+      start.setDate(start.getDate() - (i + 1) * 7);
+      const end = new Date();
+      end.setDate(end.getDate() - i * 7);
+      
+      const count = await Visit.countDocuments({
+        shortUrl: { $in: urlIds },
+        timestamp: { $gte: start, $lt: end }
+      });
+      weeklyTrends.push({
+        label: `Week ${4 - i}`,
+        value: count
+      });
+    }
+
+    // 9. Calculate monthly clicks trends for the last 6 months
+    const monthlyTrends = [];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const start = new Date(d.getFullYear(), d.getMonth(), 1);
+      const end = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+      
+      const count = await Visit.countDocuments({
+        shortUrl: { $in: urlIds },
+        timestamp: { $gte: start, $lt: end }
+      });
+      monthlyTrends.push({
+        label: months[d.getMonth()],
+        value: count
+      });
+    }
+
+    const uniqueIPsList = await Visit.distinct('ip', { shortUrl: { $in: urlIds } });
+    const countriesList = await Visit.distinct('country', { shortUrl: { $in: urlIds } });
+
     return res.json({
       success: true,
       visits: recentVisits,
       browsers: browserSplits.map(b => ({ name: b._id || 'Unknown', count: b.count })),
       devices: deviceSplits.map(d => ({ name: d._id || 'Desktop', count: d.count })),
       osList: osSplits.map(o => ({ name: o._id || 'Unknown', count: o.count })),
-      countries: countrySplits.map(c => ({ name: c._id || 'Localhost', count: c.count }))
+      countries: countrySplits.map(c => ({ name: c._id || 'Localhost', count: c.count })),
+      trends: {
+        daily: dailyTrends,
+        weekly: weeklyTrends,
+        monthly: monthlyTrends
+      },
+      uniqueVisitorsCount: uniqueIPsList.length,
+      countriesCount: countriesList.length
     });
   } catch (error) {
     console.error('Global Recent Visits Error:', error);

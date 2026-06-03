@@ -1,197 +1,121 @@
-import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 const Landing = () => {
-  const { login, signup } = useAuth();
-  const [isLoginTab, setIsLoginTab] = useState(true);
-  
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  
-  const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setErrorMessage('');
-    setSuccessMessage('');
-    setSubmitting(true);
-
-    // Frontend validations
-    if (!email || !password) {
-      setErrorMessage('Please fill in all required fields.');
-      setSubmitting(false);
-      return;
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
     }
-
-    if (password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters.');
-      setSubmitting(false);
-      return;
-    }
-
-    if (!isLoginTab && !username) {
-      setErrorMessage('Username is required for registration.');
-      setSubmitting(false);
-      return;
-    }
-
-    try {
-      if (isLoginTab) {
-        // Handle Login
-        const res = await login(email, password);
-        if (res.success) {
-          setSuccessMessage(res.message);
-        } else {
-          setErrorMessage(res.message);
-        }
-      } else {
-        // Handle Signup
-        const res = await signup(username, email, password);
-        if (res.success) {
-          setSuccessMessage(res.message);
-        } else {
-          setErrorMessage(res.message);
-        }
-      }
-    } catch {
-      setErrorMessage('An unexpected connection error occurred.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  }, [isAuthenticated, navigate]);
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <div className="auth-header">
-          <div className="brand-logo" style={{ justifyContent: 'center', marginBottom: '1rem', cursor: 'default' }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}>
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-            </svg>
-            <span>SnapLink</span>
-          </div>
-          <h2>{isLoginTab ? 'Welcome Back' : 'Create Account'}</h2>
-          <p>{isLoginTab ? 'Sleek. Optimized. Instant URL Analytics' : 'Scale your reach with advanced caching redirects'}</p>
+    <div className="landing-page">
+      {/* Hero Section */}
+      <section className="landing-hero">
+        <div className="hero-badge">
+          <span>⚡ Redirection Engine v2.0</span>
+        </div>
+        <h1>Instant, Ultra-Optimized Link Management</h1>
+        <p>
+          Deploy sub-millisecond URL redirections backed by dual-mode Redis caching, 
+          asynchronous write buffers, and secure protocol shielding.
+        </p>
+        <div className="landing-ctas">
+          <Link to="/signup" className="btn btn-primary btn-large">
+            Get Started Free
+          </Link>
+          <Link to="/login" className="btn btn-secondary btn-large">
+            Login to Workspace
+          </Link>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="landing-stats">
+        <div className="landing-stat-card">
+          <div className="landing-stat-val">&lt; 5ms</div>
+          <div className="landing-stat-lbl">Redirect Latency</div>
+          <div className="landing-stat-desc">Direct in-memory router bypasses standard database locks.</div>
+        </div>
+        <div className="landing-stat-card">
+          <div className="landing-stat-val">99.99%</div>
+          <div className="landing-stat-lbl">Cache Hit Ratio</div>
+          <div className="landing-stat-desc">Synchronized dual-mode caching fallbacks keep routing active.</div>
+        </div>
+        <div className="landing-stat-card">
+          <div className="landing-stat-val">100%</div>
+          <div className="landing-stat-lbl">Protocol Shielding</div>
+          <div className="landing-stat-desc">Proactive schema filtering blocks redirection loops.</div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="landing-features-section">
+        <div className="landing-features-header">
+          <h2>Engineered for High-Performance Redirection</h2>
+          <p>Explore the architecture driving sub-millisecond redial routing.</p>
         </div>
 
-        <div className="auth-tabs">
-          <button 
-            className={`auth-tab ${isLoginTab ? 'active' : ''}`}
-            onClick={() => {
-              setIsLoginTab(true);
-              setErrorMessage('');
-              setSuccessMessage('');
-            }}
-            disabled={submitting}
-          >
-            Login
-          </button>
-          <button 
-            className={`auth-tab ${!isLoginTab ? 'active' : ''}`}
-            onClick={() => {
-              setIsLoginTab(false);
-              setErrorMessage('');
-              setSuccessMessage('');
-            }}
-            disabled={submitting}
-          >
-            Register
-          </button>
+        <div className="landing-features-grid">
+          <div className="landing-feature-card">
+            <div className="landing-feature-icon">⚡</div>
+            <h3>Redirection Latency</h3>
+            <p>
+              Redirection requests bypass database locks completely for instant delivery, 
+              logging clicks asynchronously in the background.
+            </p>
+          </div>
+
+          <div className="landing-feature-card">
+            <div className="landing-feature-icon">📡</div>
+            <h3>Dual-Mode Caching</h3>
+            <p>
+              Active routing mappings are synced to Redis with automated high-speed 
+              in-memory JavaScript Map fallbacks if offline.
+            </p>
+          </div>
+
+          <div className="landing-feature-card">
+            <div className="landing-feature-icon">🛡️</div>
+            <h3>Protocol Shielding</h3>
+            <p>
+              Protects links by enforcing strict schema protocols and reserved keyword 
+              blocks to avoid loops or loopbacks.
+            </p>
+          </div>
+
+          <div className="landing-feature-card">
+            <div className="landing-feature-icon">📊</div>
+            <h3>Interactive Analytics</h3>
+            <p>
+              Track visitor OS versions, device categories, browser client streams, 
+              and generate clean physical QR codes.
+            </p>
+          </div>
         </div>
+      </section>
 
-        <form onSubmit={handleSubmit}>
-          {errorMessage && (
-            <div style={{
-              background: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.2)',
-              borderRadius: '8px',
-              padding: '0.75rem 1rem',
-              color: 'var(--error)',
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              marginBottom: '1.25rem'
-            }}>
-              ⚠️ {errorMessage}
-            </div>
-          )}
+      {/* Call to Action Section */}
+      <section className="landing-cta-section">
+        <h2>Ready to experience next-gen link management?</h2>
+        <p>Join developers and SaaS operators optimizing their link structures today.</p>
+        <Link to="/signup" className="btn btn-primary btn-large">
+          Create Free Account
+        </Link>
+      </section>
 
-          {successMessage && (
-            <div style={{
-              background: 'rgba(16, 185, 129, 0.1)',
-              border: '1px solid rgba(16, 185, 129, 0.2)',
-              borderRadius: '8px',
-              padding: '0.75rem 1rem',
-              color: 'var(--success)',
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              marginBottom: '1.25rem'
-            }}>
-              ✓ {successMessage}
-            </div>
-          )}
-
-          {!isLoginTab && (
-            <div className="form-group">
-              <label className="form-label">Username</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="e.g. dev_genius"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                disabled={submitting}
-                required
-              />
-            </div>
-          )}
-
-          <div className="form-group">
-            <label className="form-label">Email Address</label>
-            <input 
-              type="email" 
-              className="form-input" 
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={submitting}
-              required
-            />
-          </div>
-
-          <div className="form-group" style={{ marginBottom: '2rem' }}>
-            <label className="form-label">Password</label>
-            <input 
-              type="password" 
-              className="form-input" 
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={submitting}
-              required
-            />
-          </div>
-
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
-            style={{ width: '100%', padding: '0.8rem' }}
-            disabled={submitting}
-          >
-            {submitting ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span className="loader-spinner" style={{ width: '16px', height: '16px', borderWidth: '2px', margin: 0 }}></span>
-                Processing...
-              </span>
-            ) : (
-              isLoginTab ? 'Access Dashboard' : 'Sign Up Free'
-            )}
-          </button>
-        </form>
-      </div>
+      {/* Footer */}
+      <footer className="landing-footer">
+        <div>&copy; {new Date().getFullYear()} SnapLink Platform. All rights reserved.</div>
+        <div>
+          Powered by <strong>Redis Cache</strong> &amp; <strong>Express Redirection</strong>
+        </div>
+      </footer>
     </div>
   );
 };
