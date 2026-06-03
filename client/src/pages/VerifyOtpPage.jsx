@@ -1,70 +1,95 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const LoginPage = () => {
-  const { login, isAuthenticated } = useAuth();
+const VerifyOtpPage = () => {
+  const { verifyOtp, resendOtp } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // Try to pre-fill email from redirect state
+  const stateEmail = location.state?.email || '';
+  const [email, setEmail] = useState(stateEmail);
+  const [otp, setOtp] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [resending, setResending] = useState(false);
+  
+  // Rate-limiting resends: 60 seconds countdown
+  const [resendCooldown, setResendCooldown] = useState(0);
 
-  const [showVerifyLink, setShowVerifyLink] = useState(false);
+  const otpRef = useRef(null);
 
-  const emailRef = useRef(null);
-
-  // Auto-focus first input field on mount
+  // Auto-focus OTP field
   useEffect(() => {
-    if (emailRef.current) {
-      emailRef.current.focus();
+    if (otpRef.current) {
+      otpRef.current.focus();
     }
   }, []);
 
-  // Redirect if already authenticated
+  // Cooldown countdown timer
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
-    }
-  }, [isAuthenticated, navigate]);
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => {
+      setResendCooldown(prev => prev - 1);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     setSuccessMessage('');
-    setShowVerifyLink(false);
     setSubmitting(true);
 
-    // Form validation
-    if (!email || !password) {
-      setErrorMessage('Please fill in all required fields.');
+    if (!email || !otp) {
+      setErrorMessage('Please enter both email and verification code.');
+      setSubmitting(false);
+      return;
+    }
+
+    if (otp.length !== 6 || isNaN(otp)) {
+      setErrorMessage('Verification code must be a 6-digit number.');
       setSubmitting(false);
       return;
     }
 
     try {
-      const res = await login(email, password);
+      const res = await verifyOtp(email, otp);
       if (res.success) {
         setSuccessMessage(res.message);
-        // Clear inputs on success
-        setEmail('');
-        setPassword('');
-        // Redirect to dashboard
         setTimeout(() => {
           navigate('/dashboard');
-        }, 1000);
+        }, 1200);
       } else {
         setErrorMessage(res.message);
-        if (res.isVerified === false) {
-          setShowVerifyLink(true);
-        }
       }
     } catch {
-      setErrorMessage('An unexpected connection error occurred.');
+      setErrorMessage('Failed to connect to the verification server.');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return;
+    setErrorMessage('');
+    setSuccessMessage('');
+    setResending(true);
+
+    try {
+      const res = await resendOtp(email);
+      if (res.success) {
+        setSuccessMessage(res.message);
+        setResendCooldown(60); // 1 minute cooldown
+      } else {
+        setErrorMessage(res.message);
+      }
+    } catch {
+      setErrorMessage('Failed to resend verification code.');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -81,8 +106,8 @@ const LoginPage = () => {
               <span>SnapLink</span>
             </div>
           </Link>
-          <h2>Welcome Back</h2>
-          <p>Access your high-performance redirection analytics</p>
+          <h2>Verify Account</h2>
+          <p>Please enter the 6-digit verification code sent to your email.</p>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -95,36 +120,9 @@ const LoginPage = () => {
               color: 'var(--error)',
               fontSize: '0.85rem',
               fontWeight: 500,
-              marginBottom: '1.25rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.5rem'
+              marginBottom: '1.25rem'
             }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>⚠️ {errorMessage}</span>
-              {showVerifyLink && (
-                <button
-                  type="button"
-                  onClick={() => navigate('/verify-otp', { state: { email } })}
-                  style={{
-                    background: 'var(--primary)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '0.4rem 0.8rem',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    alignSelf: 'flex-start',
-                    marginTop: '0.25rem',
-                    boxShadow: 'var(--shadow-sm)',
-                    transition: 'all 0.25s ease'
-                  }}
-                  onMouseOver={(e) => e.target.style.filter = 'brightness(1.1)'}
-                  onMouseOut={(e) => e.target.style.filter = 'none'}
-                >
-                  Verify Account Now
-                </button>
-              )}
+              ⚠️ {errorMessage}
             </div>
           )}
 
@@ -146,30 +144,27 @@ const LoginPage = () => {
           <div className="form-group">
             <label className="form-label">Email Address</label>
             <input 
-              ref={emailRef}
               type="email" 
               className="form-input" 
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              disabled={submitting}
+              disabled={submitting || !!stateEmail}
               required
             />
           </div>
 
-          <div className="form-group" style={{ marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <label className="form-label" style={{ margin: 0 }}>Password</label>
-              <Link to="/forgot-password" style={{ color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 600, textDecoration: 'none' }}>
-                Forgot Password?
-              </Link>
-            </div>
+          <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+            <label className="form-label">Verification Code (6 Digits)</label>
             <input 
-              type="password" 
+              ref={otpRef}
+              type="text" 
+              maxLength="6"
               className="form-input" 
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              placeholder="483921"
+              style={{ textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.2em', fontWeight: 700 }}
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
               disabled={submitting}
               required
             />
@@ -178,29 +173,43 @@ const LoginPage = () => {
           <button 
             type="submit" 
             className="btn btn-primary" 
-            style={{ width: '100%', padding: '0.8rem' }}
+            style={{ width: '100%', padding: '0.8rem', marginBottom: '1rem' }}
             disabled={submitting}
           >
             {submitting ? (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span className="loader-spinner" style={{ width: '16px', height: '16px', borderWidth: '2px', margin: 0 }}></span>
-                Processing...
+                Verifying...
               </span>
             ) : (
-              'Access Dashboard'
+              'Verify Account'
             )}
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-          Don't have an account?{' '}
-          <Link to="/signup" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
-            Get Started
-          </Link>
+        <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+          {resendCooldown > 0 ? (
+            <span>Resend code in <strong style={{ color: 'var(--text-heading)' }}>{resendCooldown}s</strong></span>
+          ) : (
+            <button 
+              onClick={handleResend}
+              disabled={resending || !email}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--primary)',
+                fontWeight: 600,
+                cursor: 'pointer',
+                padding: 0
+              }}
+            >
+              {resending ? 'Sending...' : 'Resend Verification Code'}
+            </button>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-export default LoginPage;
+export default VerifyOtpPage;

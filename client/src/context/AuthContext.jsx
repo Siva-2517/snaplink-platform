@@ -63,7 +63,12 @@ export const AuthProvider = ({ children }) => {
         setUser(data.user);
         return { success: true, message: data.message || 'Logged in!' };
       } else {
-        return { success: false, message: data.message || 'Invalid credentials' };
+        return { 
+          success: false, 
+          message: data.message || 'Invalid credentials', 
+          isVerified: data.isVerified, 
+          email: data.email 
+        };
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -83,16 +88,130 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
 
       if (data.success) {
-        localStorage.setItem('token', data.token);
-        setToken(data.token);
-        setUser(data.user);
-        return { success: true, message: data.message || 'Account created!' };
+        // Sign up succeeds but requires OTP verification. We do NOT log the user in yet.
+        return { success: true, message: data.message || 'Account created! Please verify your email.' };
       } else {
         return { success: false, message: data.message || 'Sign up failed' };
       }
     } catch (error) {
       console.error('Signup error:', error);
       return { success: false, message: 'Network connection failed. Is the server running?' };
+    }
+  };
+
+  const verifyOtp = async (email, otp) => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/verify-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, otp })
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        localStorage.setItem('token', data.token);
+        setToken(data.token);
+        setUser(data.user);
+        return { success: true, message: data.message || 'Verification successful!' };
+      } else {
+        return { success: false, message: data.message || 'Verification failed.' };
+      }
+    } catch (error) {
+      console.error('Verify OTP error:', error);
+      return { success: false, message: 'Network connection failed.' };
+    }
+  };
+
+  const resendOtp = async (email) => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/resend-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email })
+      });
+      const data = await response.json();
+      return { success: data.success, message: data.message };
+    } catch (error) {
+      console.error('Resend OTP error:', error);
+      return { success: false, message: 'Network connection failed.' };
+    }
+  };
+
+  const forgotPassword = async (email) => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email })
+      });
+      const data = await response.json();
+      return { success: data.success, message: data.message };
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      return { success: false, message: 'Network connection failed.' };
+    }
+  };
+
+  const resetPassword = async (email, otp, newPassword) => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, otp, newPassword })
+      });
+      const data = await response.json();
+      return { success: data.success, message: data.message };
+    } catch (error) {
+      console.error('Reset password error:', error);
+      return { success: false, message: 'Network connection failed.' };
+    }
+  };
+
+  const updateUsername = async (newUsername) => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/update-username`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ username: newUsername })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setUser(data.user);
+        return { success: true, message: data.message };
+      }
+      return { success: false, message: data.message || 'Failed to update username.' };
+    } catch (error) {
+      console.error('Update username error:', error);
+      return { success: false, message: 'Network connection failed.' };
+    }
+  };
+
+  const updatePassword = async (currentPassword, newPassword) => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/update-password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+      const data = await response.json();
+      return { success: data.success, message: data.message };
+    } catch (error) {
+      console.error('Update password error:', error);
+      return { success: false, message: 'Network connection failed.' };
     }
   };
 
@@ -103,7 +222,21 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, isAuthenticated: !!user, login, signup, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      token, 
+      loading, 
+      isAuthenticated: !!user, 
+      login, 
+      signup, 
+      verifyOtp, 
+      resendOtp, 
+      forgotPassword, 
+      resetPassword, 
+      logout,
+      updateUsername,
+      updatePassword
+    }}>
       {children}
     </AuthContext.Provider>
   );

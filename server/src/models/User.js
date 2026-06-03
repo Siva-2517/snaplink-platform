@@ -30,7 +30,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum:['user','admin'],
     default:'user'
-  }
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  otp: String,
+  otpExpires: Date,
+  lastOtpSentAt: Date,
+  resetOtp: String,
+  resetOtpExpires: Date
 });
 
 // Auto-hash password before saving

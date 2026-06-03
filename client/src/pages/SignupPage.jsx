@@ -61,14 +61,9 @@ const SignupPage = () => {
       const res = await signup(username, email, password);
       if (res.success) {
         setSuccessMessage(res.message);
-        // Clear fields on success
-        setUsername('');
-        setEmail('');
-        setPassword('');
-        // Redirect to dashboard
         setTimeout(() => {
-          navigate('/dashboard');
-        }, 1000);
+          navigate('/verify-otp', { state: { email } });
+        }, 1200);
       } else {
         setErrorMessage(res.message);
       }

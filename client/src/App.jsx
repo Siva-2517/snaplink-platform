@@ -9,6 +9,9 @@ import Dashboard from './pages/Dashboard';
 import PublicStats from './pages/PublicStats';
 import Profile from './pages/Profile';
 import Analytics from './pages/Analytics';
+import VerifyOtpPage from './pages/VerifyOtpPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 // Protected Route Component to restrict dashboard access
 const ProtectedRoute = ({ children }) => {
@@ -30,7 +33,7 @@ const PublicLayout = ({ children }) => {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
 
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
+  const isAuthPage = ['/login', '/signup', '/verify-otp', '/forgot-password', '/reset-password'].includes(location.pathname);
 
   return (
     <div className="app-container">
@@ -555,6 +558,9 @@ const AppContent = () => {
       <Route path="/" element={<PublicLayout><Landing /></PublicLayout>} />
       <Route path="/login" element={<PublicLayout><LoginPage /></PublicLayout>} />
       <Route path="/signup" element={<PublicLayout><SignupPage /></PublicLayout>} />
+      <Route path="/verify-otp" element={<PublicLayout><VerifyOtpPage /></PublicLayout>} />
+      <Route path="/forgot-password" element={<PublicLayout><ForgotPasswordPage /></PublicLayout>} />
+      <Route path="/reset-password" element={<PublicLayout><ResetPasswordPage /></PublicLayout>} />
       <Route 
         path="/dashboard" 
         element={

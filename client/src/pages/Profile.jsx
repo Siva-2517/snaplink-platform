@@ -2,10 +2,28 @@ import { useState, useEffect } from 'react';
 import { useAuth, API_BASE, BACKEND_BASE } from '../context/AuthContext';
 
 const Profile = ({ onBackToDashboard }) => {
-  const { user, token, logout } = useAuth();
+  const { user, token, logout, updateUsername, updatePassword } = useAuth();
   
   // State
   const [urls, setUrls] = useState([]);
+  const [newUsername, setNewUsername] = useState(user?.username || '');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const [usernameError, setUsernameError] = useState('');
+  const [usernameSuccess, setUsernameSuccess] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+
+  const [updatingUsername, setUpdatingUsername] = useState(false);
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+
+  useEffect(() => {
+    if (user?.username) {
+      setNewUsername(user.username);
+    }
+  }, [user]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,6 +49,69 @@ const Profile = ({ onBackToDashboard }) => {
       fetchUrls();
     }
   }, [token]);
+
+  const handleUpdateUsername = async (e) => {
+    e.preventDefault();
+    setUsernameError('');
+    setUsernameSuccess('');
+    setUpdatingUsername(true);
+
+    if (!newUsername.trim()) {
+      setUsernameError('Username cannot be empty.');
+      setUpdatingUsername(false);
+      return;
+    }
+
+    if (newUsername === user?.username) {
+      setUsernameError('New username is the same as the current one.');
+      setUpdatingUsername(false);
+      return;
+    }
+
+    const res = await updateUsername(newUsername);
+    if (res.success) {
+      setUsernameSuccess(res.message);
+    } else {
+      setUsernameError(res.message);
+    }
+    setUpdatingUsername(false);
+  };
+
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess('');
+    setUpdatingPassword(true);
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('Please fill in all password fields.');
+      setUpdatingPassword(false);
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters.');
+      setUpdatingPassword(false);
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match.');
+      setUpdatingPassword(false);
+      return;
+    }
+
+    const res = await updatePassword(currentPassword, newPassword);
+    if (res.success) {
+      setPasswordSuccess(res.message);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } else {
+      setPasswordError(res.message);
+    }
+    setUpdatingPassword(false);
+  };
 
   // Calculations
   const totalUrls = urls.length;
@@ -228,6 +309,160 @@ const Profile = ({ onBackToDashboard }) => {
                   <p>Create shortened links and drive traffic to see performance insights here.</p>
                 </div>
               )}
+            </div>
+
+            {/* Account Settings & Security Card */}
+            <div className="glass-card profile-section-card" style={{ marginTop: '2rem' }}>
+              <h3>Security & Credentials</h3>
+              <p className="card-description">Update your account username or change your login password securely.</p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem', marginTop: '1.5rem' }}>
+                
+                {/* Username Form */}
+                <form onSubmit={handleUpdateUsername} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <h4 style={{ margin: 0, color: 'var(--text)', fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span>👤 Update Username</span>
+                  </h4>
+
+                  {usernameError && (
+                    <div style={{
+                      background: 'rgba(239, 68, 68, 0.1)',
+                      border: '1px solid rgba(239, 68, 68, 0.2)',
+                      borderRadius: '8px',
+                      padding: '0.6rem 0.8rem',
+                      color: 'var(--error)',
+                      fontSize: '0.8rem'
+                    }}>
+                      ⚠️ {usernameError}
+                    </div>
+                  )}
+
+                  {usernameSuccess && (
+                    <div style={{
+                      background: 'rgba(16, 185, 129, 0.1)',
+                      border: '1px solid rgba(16, 185, 129, 0.2)',
+                      borderRadius: '8px',
+                      padding: '0.6rem 0.8rem',
+                      color: 'var(--success)',
+                      fontSize: '0.8rem'
+                    }}>
+                      ✓ {usernameSuccess}
+                    </div>
+                  )}
+
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Username</label>
+                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        placeholder="New username"
+                        value={newUsername}
+                        onChange={(e) => setNewUsername(e.target.value)}
+                        disabled={updatingUsername}
+                        required
+                        style={{ flex: 1, padding: '0.6rem 1rem' }}
+                      />
+                      <button 
+                        type="submit" 
+                        className="btn btn-primary" 
+                        disabled={updatingUsername || newUsername === user?.username}
+                        style={{ padding: '0.6rem 1.2rem', whiteSpace: 'nowrap' }}
+                      >
+                        {updatingUsername ? 'Saving...' : 'Update'}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+
+                <hr style={{ border: 'none', borderTop: '1px solid rgba(255, 255, 255, 0.08)', margin: '0.5rem 0' }} />
+
+                {/* Password Form */}
+                <form onSubmit={handleUpdatePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <h4 style={{ margin: 0, color: 'var(--text)', fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span>🔒 Change Account Password</span>
+                  </h4>
+
+                  {passwordError && (
+                    <div style={{
+                      background: 'rgba(239, 68, 68, 0.1)',
+                      border: '1px solid rgba(239, 68, 68, 0.2)',
+                      borderRadius: '8px',
+                      padding: '0.6rem 0.8rem',
+                      color: 'var(--error)',
+                      fontSize: '0.8rem'
+                    }}>
+                      ⚠️ {passwordError}
+                    </div>
+                  )}
+
+                  {passwordSuccess && (
+                    <div style={{
+                      background: 'rgba(16, 185, 129, 0.1)',
+                      border: '1px solid rgba(16, 185, 129, 0.2)',
+                      borderRadius: '8px',
+                      padding: '0.6rem 0.8rem',
+                      color: 'var(--success)',
+                      fontSize: '0.8rem'
+                    }}>
+                      ✓ {passwordSuccess}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontSize: '0.8rem' }}>Current Password</label>
+                      <input 
+                        type="password" 
+                        className="form-input" 
+                        placeholder="••••••••"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        disabled={updatingPassword}
+                        required
+                        style={{ padding: '0.6rem 1rem' }}
+                      />
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontSize: '0.8rem' }}>New Password</label>
+                      <input 
+                        type="password" 
+                        className="form-input" 
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        disabled={updatingPassword}
+                        required
+                        style={{ padding: '0.6rem 1rem' }}
+                      />
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontSize: '0.8rem' }}>Confirm New Password</label>
+                      <input 
+                        type="password" 
+                        className="form-input" 
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        disabled={updatingPassword}
+                        required
+                        style={{ padding: '0.6rem 1rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary" 
+                    disabled={updatingPassword}
+                    style={{ padding: '0.7rem 1.5rem', alignSelf: 'flex-start' }}
+                  >
+                    {updatingPassword ? 'Updating Password...' : 'Update Password'}
+                  </button>
+                </form>
+              </div>
             </div>
 
           </div>

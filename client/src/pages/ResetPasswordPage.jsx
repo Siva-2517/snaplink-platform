@@ -1,68 +1,72 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const LoginPage = () => {
-  const { login, isAuthenticated } = useAuth();
+const ResetPasswordPage = () => {
+  const { resetPassword } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const stateEmail = location.state?.email || '';
+  const [email, setEmail] = useState(stateEmail);
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const [showVerifyLink, setShowVerifyLink] = useState(false);
+  const otpRef = useRef(null);
 
-  const emailRef = useRef(null);
-
-  // Auto-focus first input field on mount
   useEffect(() => {
-    if (emailRef.current) {
-      emailRef.current.focus();
+    if (otpRef.current) {
+      otpRef.current.focus();
     }
   }, []);
-
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
-    }
-  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     setSuccessMessage('');
-    setShowVerifyLink(false);
     setSubmitting(true);
 
-    // Form validation
-    if (!email || !password) {
+    if (!email || !otp || !newPassword) {
       setErrorMessage('Please fill in all required fields.');
       setSubmitting(false);
       return;
     }
 
+    if (otp.length !== 6 || isNaN(otp)) {
+      setErrorMessage('Reset code must be a 6-digit number.');
+      setSubmitting(false);
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setErrorMessage('Password must be at least 6 characters.');
+      setSubmitting(false);
+      return;
+    }
+
+    const hasLetter = /[a-zA-Z]/.test(newPassword);
+    const hasNumber = /[0-9]/.test(newPassword);
+    if (!hasLetter || !hasNumber) {
+      setErrorMessage('Password must contain at least one letter and one number.');
+      setSubmitting(false);
+      return;
+    }
+
     try {
-      const res = await login(email, password);
+      const res = await resetPassword(email, otp, newPassword);
       if (res.success) {
         setSuccessMessage(res.message);
-        // Clear inputs on success
-        setEmail('');
-        setPassword('');
-        // Redirect to dashboard
         setTimeout(() => {
-          navigate('/dashboard');
-        }, 1000);
+          navigate('/login');
+        }, 1500);
       } else {
         setErrorMessage(res.message);
-        if (res.isVerified === false) {
-          setShowVerifyLink(true);
-        }
       }
     } catch {
-      setErrorMessage('An unexpected connection error occurred.');
+      setErrorMessage('Failed to connect to the server.');
     } finally {
       setSubmitting(false);
     }
@@ -81,8 +85,8 @@ const LoginPage = () => {
               <span>SnapLink</span>
             </div>
           </Link>
-          <h2>Welcome Back</h2>
-          <p>Access your high-performance redirection analytics</p>
+          <h2>New Password</h2>
+          <p>Create a secure new password for your SnapLink account.</p>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -95,36 +99,9 @@ const LoginPage = () => {
               color: 'var(--error)',
               fontSize: '0.85rem',
               fontWeight: 500,
-              marginBottom: '1.25rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.5rem'
+              marginBottom: '1.25rem'
             }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>⚠️ {errorMessage}</span>
-              {showVerifyLink && (
-                <button
-                  type="button"
-                  onClick={() => navigate('/verify-otp', { state: { email } })}
-                  style={{
-                    background: 'var(--primary)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '0.4rem 0.8rem',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    alignSelf: 'flex-start',
-                    marginTop: '0.25rem',
-                    boxShadow: 'var(--shadow-sm)',
-                    transition: 'all 0.25s ease'
-                  }}
-                  onMouseOver={(e) => e.target.style.filter = 'brightness(1.1)'}
-                  onMouseOut={(e) => e.target.style.filter = 'none'}
-                >
-                  Verify Account Now
-                </button>
-              )}
+              ⚠️ {errorMessage}
             </div>
           )}
 
@@ -146,33 +123,46 @@ const LoginPage = () => {
           <div className="form-group">
             <label className="form-label">Email Address</label>
             <input 
-              ref={emailRef}
               type="email" 
               className="form-input" 
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={submitting || !!stateEmail}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Reset Code (6 Digits)</label>
+            <input 
+              ref={otpRef}
+              type="text" 
+              maxLength="6"
+              className="form-input" 
+              placeholder="123456"
+              style={{ textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.2em', fontWeight: 700 }}
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
               disabled={submitting}
               required
             />
           </div>
 
           <div className="form-group" style={{ marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <label className="form-label" style={{ margin: 0 }}>Password</label>
-              <Link to="/forgot-password" style={{ color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 600, textDecoration: 'none' }}>
-                Forgot Password?
-              </Link>
-            </div>
+            <label className="form-label">New Password</label>
             <input 
               type="password" 
               className="form-input" 
               placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
               disabled={submitting}
               required
             />
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              Password must be at least 6 characters, including a letter and a number.
+            </span>
           </div>
 
           <button 
@@ -184,18 +174,18 @@ const LoginPage = () => {
             {submitting ? (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span className="loader-spinner" style={{ width: '16px', height: '16px', borderWidth: '2px', margin: 0 }}></span>
-                Processing...
+                Updating...
               </span>
             ) : (
-              'Access Dashboard'
+              'Reset Password'
             )}
           </button>
         </form>
 
         <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-          Don't have an account?{' '}
-          <Link to="/signup" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
-            Get Started
+          Back to{' '}
+          <Link to="/login" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
+            Login
           </Link>
         </div>
       </div>
@@ -203,4 +193,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default ResetPasswordPage;
