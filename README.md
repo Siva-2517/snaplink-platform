@@ -126,7 +126,7 @@ npm run dev
 ## 🎥 Explanatory Demonstration Video
 
 Please find below the explanatory Loom video demonstration covering code walkthrough, database entries, Redis fallback connection, background analytics writes, and security controls:
-- **Loom/YouTube Video Link**: *(Add your recorded Loom or YouTube video demonstration URL here)*
+- **Loom/YouTube Video Link**: *https://youtu.be/B6P3HEem_Sc?si=rbN_5BVcvl2AEXrm*
 
 ---
 
