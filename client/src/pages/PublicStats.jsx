@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { API_BASE, BACKEND_BASE } from '../context/AuthContext';
+import { Button, Card, CircularProgress, Box, Alert } from '@mui/material';
 
 const PublicStats = ({ shortCode, onBack }) => {
   const [stats, setStats] = useState(null);
@@ -28,10 +29,7 @@ const PublicStats = ({ shortCode, onBack }) => {
     };
 
     if (shortCode) {
-      // First load (not silent, shows spinner)
       fetchStats(false);
-
-      // Set up background polling (silent, no loading flicker)
       const intervalId = setInterval(() => {
         fetchStats(true);
       }, 10000);
@@ -42,24 +40,26 @@ const PublicStats = ({ shortCode, onBack }) => {
 
   if (loading) {
     return (
-      <div className="public-stats-page">
-        <div className="loader-spinner" style={{ margin: '6rem auto' }}></div>
+      <div className="public-stats-page container py-5">
+        <Box display="flex" justifyContent="center" py={8}>
+          <CircularProgress color="primary" />
+        </Box>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="public-stats-page">
-        <div className="public-stats-error">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: 'var(--error)' }}>
-            <circle cx="12" cy="12" r="10" />
-            <line x1="15" y1="9" x2="9" y2="15" />
-            <line x1="9" y1="9" x2="15" y2="15" />
-          </svg>
-          <h2>Link Not Found</h2>
-          <p>{error}</p>
-          <button className="btn btn-secondary" onClick={onBack}>← Go Back</button>
+      <div className="public-stats-page container py-5">
+        <div className="public-stats-error text-center py-5">
+          <Alert severity="error" className="mb-4 d-inline-flex" sx={{ borderRadius: 2 }}>
+            {error}
+          </Alert>
+          <div>
+            <Button variant="outlined" color="inherit" onClick={onBack}>
+              ← Go Back
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -68,18 +68,15 @@ const PublicStats = ({ shortCode, onBack }) => {
   const baseUrl = BACKEND_BASE;
 
   return (
-    <div className="public-stats-page">
+    <div className="public-stats-page container py-4" style={{ maxWidth: 900 }}>
       <div className="public-stats-container">
         {/* Header */}
-        <div className="public-stats-header">
-          <button className="btn btn-secondary" onClick={onBack} style={{ marginBottom: '1rem' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-            Back
-          </button>
-          <div className="public-stats-badge">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ color: 'var(--success)' }}>
+        <div className="public-stats-header mb-4">
+          <Button variant="outlined" color="inherit" onClick={onBack} size="small" sx={{ mb: 2 }}>
+            ← Back
+          </Button>
+          <div className="public-stats-badge mb-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ color: 'var(--success)', marginRight: 4 }}>
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
@@ -95,30 +92,38 @@ const PublicStats = ({ shortCode, onBack }) => {
           </div>
         </div>
 
-        {/* Summary Cards */}
-        <div className="analytics-summary" style={{ marginTop: '2rem' }}>
-          <div className="summary-tile">
-            <span>Total Clicks</span>
-            <h4 style={{ fontSize: '2rem', color: 'var(--primary)' }}>{stats.totalClicks}</h4>
+        {/* Summary Cards Row using Bootstrap grid */}
+        <div className="row g-3 mb-4">
+          <div className="col-12 col-sm-6 col-md-3">
+            <Card className="summary-tile h-100 p-3" sx={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+              <span>Total Clicks</span>
+              <h4 style={{ fontSize: '1.8rem', color: 'var(--primary)', margin: '0.25rem 0 0 0' }}>{stats.totalClicks}</h4>
+            </Card>
           </div>
-          <div className="summary-tile">
-            <span>Last Visited</span>
-            <h4>{stats.lastVisitedAt ? new Date(stats.lastVisitedAt).toLocaleString() : 'Never'}</h4>
+          <div className="col-12 col-sm-6 col-md-3">
+            <Card className="summary-tile h-100 p-3" sx={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+              <span>Last Visited</span>
+              <h4 style={{ fontSize: '1rem', margin: '0.25rem 0 0 0' }}>{stats.lastVisitedAt ? new Date(stats.lastVisitedAt).toLocaleString() : 'Never'}</h4>
+            </Card>
           </div>
-          <div className="summary-tile">
-            <span>Created</span>
-            <h4>{new Date(stats.createdAt).toLocaleDateString()}</h4>
+          <div className="col-12 col-sm-6 col-md-3">
+            <Card className="summary-tile h-100 p-3" sx={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+              <span>Created</span>
+              <h4 style={{ fontSize: '1rem', margin: '0.25rem 0 0 0' }}>{new Date(stats.createdAt).toLocaleDateString()}</h4>
+            </Card>
           </div>
           {stats.expiresAt && (
-            <div className="summary-tile">
-              <span>Expires</span>
-              <h4>{new Date(stats.expiresAt).toLocaleDateString()}</h4>
+            <div className="col-12 col-sm-6 col-md-3">
+              <Card className="summary-tile h-100 p-3" sx={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+                <span>Expires</span>
+                <h4 style={{ fontSize: '1rem', margin: '0.25rem 0 0 0' }}>{new Date(stats.expiresAt).toLocaleDateString()}</h4>
+              </Card>
             </div>
           )}
         </div>
 
         {/* Daily Trends Chart */}
-        <div className="analytics-block" style={{ marginTop: '1.5rem' }}>
+        <Card className="analytics-block mb-4 p-3" sx={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
           <h4>Click Trends — Last 7 Days</h4>
           <div className="chart-container">
             <svg className="chart-svg" viewBox="0 0 700 200">
@@ -128,7 +133,7 @@ const PublicStats = ({ shortCode, onBack }) => {
               <line x1="50" y1="170" x2="660" y2="170" className="chart-base-line" strokeWidth="1" />
 
               {stats.dailyTrends.map((trend, i) => {
-                const maxClicks = Math.max(...stats.dailyTrends.map(t => t.clicks), 5);
+                const maxClicks = Math.max(...stats.dailyTrends.map((t) => t.clicks), 5);
                 const chartHeight = 130;
                 const colHeight = (trend.clicks / maxClicks) * chartHeight;
                 const x = 75 + i * 82;
@@ -148,68 +153,72 @@ const PublicStats = ({ shortCode, onBack }) => {
               })}
             </svg>
           </div>
-        </div>
+        </Card>
 
-        {/* Analytics Breakdowns */}
-        <div className="analytics-row" style={{ marginTop: '1.5rem' }}>
-          <div className="analytics-block">
-            <h4>Top Browsers</h4>
-            <div className="ratio-list">
-              {stats.browsers.length === 0 ? (
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No data yet</span>
-              ) : (
-                stats.browsers.map(item => {
-                  const percent = stats.totalClicks > 0 ? Math.round((item.count / stats.totalClicks) * 100) : 0;
-                  return (
-                    <div key={item.name} className="ratio-item">
-                      <div className="ratio-info">
-                        <span className="ratio-name">{item.name}</span>
-                        <span className="ratio-val">{item.count} ({percent}%)</span>
+        {/* Analytics Breakdowns using Bootstrap grid */}
+        <div className="row g-4 mb-4">
+          <div className="col-12 col-md-6">
+            <Card className="analytics-block h-100 p-3" sx={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+              <h4>Top Browsers</h4>
+              <div className="ratio-list">
+                {stats.browsers.length === 0 ? (
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No data yet</span>
+                ) : (
+                  stats.browsers.map((item) => {
+                    const percent = stats.totalClicks > 0 ? Math.round((item.count / stats.totalClicks) * 100) : 0;
+                    return (
+                      <div key={item.name} className="ratio-item mb-2">
+                        <div className="ratio-info">
+                          <span className="ratio-name">{item.name}</span>
+                          <span className="ratio-val">{item.count} ({percent}%)</span>
+                        </div>
+                        <div className="ratio-track">
+                          <div className="ratio-fill" style={{ width: `${percent}%` }}></div>
+                        </div>
                       </div>
-                      <div className="ratio-track">
-                        <div className="ratio-fill" style={{ width: `${percent}%` }}></div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+                    );
+                  })
+                )}
+              </div>
+            </Card>
           </div>
 
-          <div className="analytics-block">
-            <h4>Devices</h4>
-            <div className="ratio-list">
-              {stats.devices.length === 0 ? (
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No data yet</span>
-              ) : (
-                stats.devices.map(item => {
-                  const percent = stats.totalClicks > 0 ? Math.round((item.count / stats.totalClicks) * 100) : 0;
-                  return (
-                    <div key={item.name} className="ratio-item">
-                      <div className="ratio-info">
-                        <span className="ratio-name">{item.name}</span>
-                        <span className="ratio-val">{item.count} ({percent}%)</span>
+          <div className="col-12 col-md-6">
+            <Card className="analytics-block h-100 p-3" sx={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
+              <h4>Devices</h4>
+              <div className="ratio-list">
+                {stats.devices.length === 0 ? (
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No data yet</span>
+                ) : (
+                  stats.devices.map((item) => {
+                    const percent = stats.totalClicks > 0 ? Math.round((item.count / stats.totalClicks) * 100) : 0;
+                    return (
+                      <div key={item.name} className="ratio-item mb-2">
+                        <div className="ratio-info">
+                          <span className="ratio-name">{item.name}</span>
+                          <span className="ratio-val">{item.count} ({percent}%)</span>
+                        </div>
+                        <div className="ratio-track">
+                          <div className="ratio-fill" style={{ width: `${percent}%` }}></div>
+                        </div>
                       </div>
-                      <div className="ratio-track">
-                        <div className="ratio-fill" style={{ width: `${percent}%` }}></div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+                    );
+                  })
+                )}
+              </div>
+            </Card>
           </div>
         </div>
 
         {/* Countries */}
         {stats.countries.length > 0 && (
-          <div className="analytics-block" style={{ marginTop: '1.5rem' }}>
+          <Card className="analytics-block mb-4 p-3" sx={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
             <h4>Top Visitor Countries</h4>
             <div className="ratio-list">
-              {stats.countries.map(item => {
+              {stats.countries.map((item) => {
                 const percent = stats.totalClicks > 0 ? Math.round((item.count / stats.totalClicks) * 100) : 0;
                 return (
-                  <div key={item.name} className="ratio-item">
+                  <div key={item.name} className="ratio-item mb-2">
                     <div className="ratio-info">
                       <span className="ratio-name">{item.name}</span>
                       <span className="ratio-val">{item.count} ({percent}%)</span>
@@ -221,23 +230,21 @@ const PublicStats = ({ shortCode, onBack }) => {
                 );
               })}
             </div>
-          </div>
+          </Card>
         )}
 
         {/* Recent Visits */}
-        <div className="analytics-block" style={{ marginTop: '1.5rem' }}>
+        <Card className="analytics-block mb-4 p-3" sx={{ background: 'var(--bg-card)', border: '1px solid var(--border-glass)' }}>
           <h4>Recent Visitors</h4>
           <div className="timeline">
             {stats.recentVisits.length === 0 ? (
               <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No visitors recorded yet</span>
             ) : (
               stats.recentVisits.map((visit, index) => (
-                <div key={index} className="timeline-item">
+                <div key={index} className="timeline-item mb-2">
                   <div className="timeline-dot"></div>
                   <div className="timeline-content">
-                    <span style={{ fontWeight: 600 }}>
-                      Visitor from {visit.country}
-                    </span>
+                    <span style={{ fontWeight: 600 }}>Visitor from {visit.country}</span>
                     <span className="timeline-meta">
                       Device: {visit.device} • OS: {visit.os} • Browser: {visit.browser}
                     </span>
@@ -249,10 +256,10 @@ const PublicStats = ({ shortCode, onBack }) => {
               ))
             )}
           </div>
-        </div>
+        </Card>
 
         {/* Footer */}
-        <div className="public-stats-footer">
+        <div className="public-stats-footer text-center pt-4 border-top">
           <p>Powered by <strong>SnapLink</strong> — URL Shortener with Analytics</p>
         </div>
       </div>

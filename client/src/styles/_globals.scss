@@ -1,0 +1,131 @@
+// SnapLink Design System - Globals & CSS Variables
+@use 'variables' as *;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+/* --- Sleek Dark-Mode Glassmorphic Tokens --- */
+:root {
+  --text-heading: #ffffff;
+  --bg-canvas: #06060a;
+  --bg-card: rgba(13, 13, 20, 0.7);
+  --bg-input: rgba(8, 8, 12, 0.9);
+  --primary: #{$primary};
+  --primary-hover: #{$primary-hover};
+  --primary-glow: #{$primary-glow};
+  --accent-violet: #{$accent-violet};
+  --accent-cyan: #{$accent-cyan};
+  --success: #{$success};
+  --success-glow: #{$success-glow};
+  --error: #{$error};
+  --error-glow: #{$error-glow};
+  --text-main: #f4f4f6;
+  --text-muted: #94a3b8;
+  --border-glass: rgba(255, 255, 255, 0.05);
+  --border-active: rgba(95, 93, 236, 0.4);
+  --bg-glass: rgba(255, 255, 255, 0.03);
+  --bg-glass-strong: rgba(255, 255, 255, 0.06);
+  --bg-navbar: rgba(6, 6, 10, 0.5);
+  --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+
+  font-family: $font-sans;
+  color: var(--text-main);
+  background-color: var(--bg-canvas);
+  color-scheme: dark;
+}
+
+/* --- Premium Light-Mode CSS Variables --- */
+body.light,
+html.light {
+  --text-heading: #0f172a;
+  --bg-canvas: #f8fafc;
+  --bg-card: rgba(255, 255, 255, 0.75);
+  --bg-input: rgba(255, 255, 255, 0.9);
+  --primary-glow: rgba(95, 93, 236, 0.15);
+  --success-glow: rgba(16, 185, 129, 0.1);
+  --error-glow: rgba(239, 68, 68, 0.1);
+  --text-main: #334155;
+  --text-muted: #64748b;
+  --border-glass: rgba(15, 23, 42, 0.08);
+  --border-active: rgba(95, 93, 236, 0.5);
+  --bg-glass: rgba(15, 23, 42, 0.03);
+  --bg-glass-strong: rgba(15, 23, 42, 0.06);
+  --bg-navbar: rgba(255, 255, 255, 0.7);
+  --card-shadow: 0 8px 32px 0 rgba(148, 163, 184, 0.15);
+  color-scheme: light;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-glow) transparent;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-glass-strong);
+  border-radius: 10px;
+
+  &:hover {
+    background: var(--primary-glow);
+  }
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-image:
+    radial-gradient(at 10% 10%, rgba(95, 93, 236, 0.08) 0px, transparent 50%),
+    radial-gradient(at 90% 90%, rgba(139, 92, 246, 0.08) 0px, transparent 50%);
+  background-attachment: fixed;
+  overflow-x: hidden;
+
+  &.light {
+    background-image:
+      radial-gradient(at 10% 10%, rgba(95, 93, 236, 0.05) 0px, transparent 50%),
+      radial-gradient(at 90% 90%, rgba(139, 92, 246, 0.05) 0px, transparent 50%);
+  }
+}
+
+h1, h2, h3, h4, .brand-logo {
+  font-family: $font-display;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+code {
+  background: rgba(95, 93, 236, 0.1);
+  color: var(--primary);
+  padding: 0.15rem 0.4rem;
+  border-radius: $radius-sm;
+  font-size: 0.85em;
+  font-family: $font-mono;
+}
+
+body,
+.navbar,
+.stat-card,
+.shortener-widget,
+.link-card,
+.glass-card,
+.modal-content,
+.toast,
+.form-input,
+.btn-secondary,
+.analytics-block,
+.profile-section-card,
+.summary-tile,
+.btn {
+  transition: background 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease, transform 0.2s ease;
+}

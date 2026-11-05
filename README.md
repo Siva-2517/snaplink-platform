@@ -45,6 +45,32 @@ The application was designed and built following a structured 5-phase AI-driven 
    - Implemented `express-rate-limit` to prevent brute force attacks.
    - Enforced soft deletes to preserve historical user analytics while deprecating redirection endpoints for deleted URLs.
 
+---
+
+## 🎨 Integrated Frontend Technologies
+
+The SnapLink frontend integrates modern design and layout libraries seamlessly while preserving the custom glassmorphism theme and dark/light mode toggles:
+
+### 1. Bootstrap
+- **Responsive Layout & Grid**: Applied `container`, `container-fluid`, `row`, and `col-*` responsive grid structures across authentication, dashboard, analytics, profile, and landing pages.
+- **Utility Classes**: Leveraged Bootstrap spacing (`py-4`, `mb-3`, `g-4`), alignment (`justify-content-center`, `align-items-center`), and flexbox helpers.
+
+### 2. Material UI (MUI / Material Design)
+- **Authentication Forms**: Built with MUI `TextField`, `Button`, `Alert`, and `CircularProgress` on Login, Signup, OTP Verification, Forgot Password, and Reset Password pages.
+- **Dashboard & Workspace**: Integrated MUI `Button`, `Dialog` (modals for QR code, analytics insights, and edit destination link), `Tooltip`, `CircularProgress`, and `IconButton`.
+- **Analytics & Profile**: Enhanced with MUI `Card`, `Tabs`, `Tab`, `Table`, `TableContainer`, `TableHead`, `TableRow`, `TableCell`, `Skeleton`, and `Chip`.
+
+### 3. SASS / SCSS
+- **Structured Modular SCSS**: Organized styles in `client/src/styles/`:
+  - `_variables.scss`: SCSS color tokens, fonts, border radii, shadows.
+  - `_mixins.scss`: Glassmorphism, flex center, gradient text, and breakpoint mixins.
+  - `_globals.scss`: CSS variable root tokens, dark/light mode theme variables, scrollbar styling.
+  - `_layout.scss`: Navigation bar, sidebar, app container layouts.
+  - `_components.scss`: Buttons, badges, toast notifications, modals, loaders.
+  - `_auth.scss`: Auth cards, form fields.
+  - `_dashboard.scss`: Overview cards, URL list cards, charts, analytics panels.
+  - `main.scss`: Main SCSS entry point importing Bootstrap CSS and all partials.
+
 
 ---
 
@@ -119,7 +145,7 @@ npm run dev
 1. **Local Ports availability**: We assume ports `5000` (Backend) and `5173` (Frontend) are free.
 2. **MongoDB Local Setup**: We assume a standard, unauthenticated MongoDB instance is listening at `mongodb://127.0.0.1:27017/url_shortener`.
 3. **Local Caching fallback**: We assume that if local TCP connection to Redis port `6379` fails, the evaluator would prefer a silent, robust fallback to in-memory caching to avoid startup crashes.
-4. **Geographic Demographics**: Because capturing actual location depends on external database layers (such as GeoIP2), we deterministic-hash visitor IP addresses against a global list to generate consistent, realistic country distributions on the dashboard.
+4. **Geographic Demographics**: Visitor locations are resolved via real IP geolocation using `geoip-lite` alongside edge CDN headers (`cf-ipcountry`, `x-vercel-ip-country`, `cloudfront-viewer-country`) with graceful localhost/private subnet fallbacks.
 
 ---
 

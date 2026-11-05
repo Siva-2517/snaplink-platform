@@ -11,9 +11,23 @@ class CacheManager {
   }
 
   async initRedis() {
+    if (process.env.NODE_ENV === 'test') {
+      return; // Instantly use high-speed in-memory cache during automated tests
+    }
+
     const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
     try {
-      this.redisClient = createClient({ url: redisUrl });
+      this.redisClient = createClient({
+        url: redisUrl,
+        socket: {
+          reconnectStrategy: (retries) => {
+            if (retries > 3) {
+              return new Error('Redis max retries reached. Using fallback cache.');
+            }
+            return Math.min(retries * 150, 1000);
+          }
+        }
+      });
 
       this.redisClient.on('error', (err) => {
         if (this.isRedisConnected) {

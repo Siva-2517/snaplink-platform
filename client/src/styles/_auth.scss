@@ -1,0 +1,93 @@
+// SnapLink Design System - Authentication Pages
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.auth-page {
+  flex: 1;
+  @include flex-center;
+  padding: 2rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  @include glassmorphism(var(--bg-card), 20px, var(--border-glass));
+  border-radius: $radius-xl;
+  box-shadow: var(--card-shadow);
+  padding: 2.5rem;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 2rem;
+
+  h2 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    @include gradient-text(var(--text-heading), var(--primary));
+  }
+
+  p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+}
+
+.auth-tabs {
+  display: flex;
+  background: var(--bg-glass);
+  border-radius: $radius-md;
+  padding: 0.25rem;
+  margin-bottom: 1.75rem;
+  border: 1px solid var(--border-glass);
+}
+
+.auth-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 0.6rem;
+  cursor: pointer;
+  border-radius: $radius-sm;
+  transition: $transition-fast;
+
+  &.active {
+    background: rgba(95, 93, 236, 0.15);
+    color: #ffffff;
+    border: 1px solid rgba(95, 93, 236, 0.25);
+  }
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-glass);
+  border-radius: $radius-md;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  color: var(--text-heading);
+  transition: $transition-normal;
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+  }
+}

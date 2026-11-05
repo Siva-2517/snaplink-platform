@@ -4,49 +4,59 @@ class AnalyticsBuffer {
   constructor() {
     this.queue = [];
     this.limit = 100;
+    this.maxQueueSize = 5000;
     this.flushIntervalMs = 5000;
     this.intervalId = null;
+    this.isFlushing = false;
 
     this.startInterval();
   }
 
   startInterval() {
     this.intervalId = setInterval(() => this.flush(), this.flushIntervalMs);
+    if (this.intervalId && typeof this.intervalId.unref === 'function') {
+      this.intervalId.unref();
+    }
   }
 
   push(visitData) {
+    if (this.queue.length >= this.maxQueueSize) {
+      console.warn(
+        `⚠️ Analytics Buffer reached maximum ceiling (${this.maxQueueSize}). Dropping oldest visit record to prevent OOM.`
+      );
+      this.queue.shift();
+    }
+
     this.queue.push(visitData);
-    if (this.queue.length >= this.limit) {
-      console.log(`🚀 Analytics Buffer reached capacity (${this.queue.length}). Flushing immediately.`);
+
+    if (this.queue.length >= this.limit && !this.isFlushing) {
       this.flush();
     }
   }
 
   async flush() {
-    if (this.queue.length === 0) return;
+    if (this.queue.length === 0 || this.isFlushing) return;
 
-    // Snapshot the current queue and empty the main queue to process safely
+    this.isFlushing = true;
     const batch = [...this.queue];
     this.queue = [];
 
     try {
-      // Dynamic import to prevent circular dependency bugs
       const Visit = require('../models/Visit');
       const ShortURL = require('../models/ShortURL');
 
-      console.log(`📦 Flushing ${batch.length} click analytics to MongoDB...`);
-
       // 1. Bulk insert all granular Visit records
-      await Visit.insertMany(batch);
+      await Visit.insertMany(batch, { ordered: false });
 
       // 2. Aggregate clicks by URL ID to minimize database writes
       const clickAggregates = {};
       const latestVisits = {};
 
-      batch.forEach(visit => {
+      batch.forEach((visit) => {
+        if (!visit.shortUrl) return;
         const urlId = visit.shortUrl.toString();
         clickAggregates[urlId] = (clickAggregates[urlId] || 0) + 1;
-        
+
         const timestamp = new Date(visit.timestamp);
         if (!latestVisits[urlId] || timestamp > latestVisits[urlId]) {
           latestVisits[urlId] = timestamp;
@@ -55,13 +65,12 @@ class AnalyticsBuffer {
 
       // 3. Formulate bulk updates for precomputed statistics
       const bulkOps = Object.keys(clickAggregates)
-        .filter(urlId => mongoose.Types.ObjectId.isValid(urlId))
-        .map(urlId => ({
+        .filter((urlId) => mongoose.Types.ObjectId.isValid(urlId))
+        .map((urlId) => ({
           updateOne: {
             filter: { _id: new mongoose.Types.ObjectId(urlId) },
             update: {
               $inc: { clicks: clickAggregates[urlId] },
-              // Set last visited timestamp if applicable
               $set: { lastVisitedAt: latestVisits[urlId] }
             }
           }
@@ -70,12 +79,20 @@ class AnalyticsBuffer {
       if (bulkOps.length > 0) {
         await ShortURL.bulkWrite(bulkOps);
       }
-
-      console.log(`✅ Success: ${batch.length} visits buffered, aggregates pre-computed!`);
     } catch (error) {
-      console.error('❌ Analytics Buffer Flush Error:', error);
-      // Re-insert failed items back to queue to ensure no data loss
-      this.queue = [...batch, ...this.queue];
+      console.error('❌ Analytics Buffer Flush Error:', error.message);
+      // Re-queue with bounded backpressure
+      const combined = [...batch, ...this.queue];
+      if (combined.length > this.maxQueueSize) {
+        console.warn(
+          `⚠️ Dropping ${combined.length - this.maxQueueSize} backlogged analytics records due to buffer overflow.`
+        );
+        this.queue = combined.slice(-this.maxQueueSize);
+      } else {
+        this.queue = combined;
+      }
+    } finally {
+      this.isFlushing = false;
     }
   }
 
@@ -83,6 +100,7 @@ class AnalyticsBuffer {
   async shutdown() {
     if (this.intervalId) {
       clearInterval(this.intervalId);
+      this.intervalId = null;
     }
     await this.flush();
   }

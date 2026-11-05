@@ -1,18 +1,25 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth, API_BASE } from './context/AuthContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import Landing from './pages/Landing';
-import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
-import Dashboard from './pages/Dashboard';
-import PublicStats from './pages/PublicStats';
-import Profile from './pages/Profile';
-import Analytics from './pages/Analytics';
-import VerifyOtpPage from './pages/VerifyOtpPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
+
+const Landing = lazy(() => import('./pages/Landing'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const SignupPage = lazy(() => import('./pages/SignupPage'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const PublicStats = lazy(() => import('./pages/PublicStats'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const VerifyOtpPage = lazy(() => import('./pages/VerifyOtpPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+
+const PageLoader = () => (
+  <div className="loading-container" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="loader-spinner"></div>
+  </div>
+);
 
 // Protected Route Component to restrict dashboard access
 const ProtectedRoute = ({ children }) => {
@@ -347,20 +354,22 @@ const DashboardShell = ({
 
         {/* Main scrollable body container */}
         <main className="main-content-scrollspy">
-          {currentView === 'profile' ? (
-            <Profile onBackToDashboard={() => setCurrentView('dashboard')} />
-          ) : currentView === 'analytics' ? (
-            <Analytics urls={urls} loading={urlsLoading} />
-          ) : (
-            <Dashboard 
-              urls={urls} 
-              loading={urlsLoading} 
-              setUrls={setUrls} 
-              fetchUrls={fetchUrls}
-              searchQuery={searchQuery} 
-              setSearchQuery={setSearchQuery} 
-            />
-          )}
+          <Suspense fallback={<PageLoader />}>
+            {currentView === 'profile' ? (
+              <Profile onBackToDashboard={() => setCurrentView('dashboard')} />
+            ) : currentView === 'analytics' ? (
+              <Analytics urls={urls} loading={urlsLoading} />
+            ) : (
+              <Dashboard 
+                urls={urls} 
+                loading={urlsLoading} 
+                setUrls={setUrls} 
+                fetchUrls={fetchUrls}
+                searchQuery={searchQuery} 
+                setSearchQuery={setSearchQuery} 
+              />
+            )}
+          </Suspense>
         </main>
       </div>
     </div>
@@ -538,10 +547,12 @@ const AppContent = () => {
             </span>
           </div>
         </nav>
-        <PublicStats
-          shortCode={publicStatsCode}
-          onBack={() => { window.location.hash = ''; }}
-        />
+        <Suspense fallback={<PageLoader />}>
+          <PublicStats
+            shortCode={publicStatsCode}
+            onBack={() => { window.location.hash = ''; }}
+          />
+        </Suspense>
       </div>
     );
   }
@@ -555,40 +566,42 @@ const AppContent = () => {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<PublicLayout><Landing /></PublicLayout>} />
-      <Route path="/login" element={<PublicLayout><LoginPage /></PublicLayout>} />
-      <Route path="/signup" element={<PublicLayout><SignupPage /></PublicLayout>} />
-      <Route path="/verify-otp" element={<PublicLayout><VerifyOtpPage /></PublicLayout>} />
-      <Route path="/forgot-password" element={<PublicLayout><ForgotPasswordPage /></PublicLayout>} />
-      <Route path="/reset-password" element={<PublicLayout><ResetPasswordPage /></PublicLayout>} />
-      <Route 
-        path="/dashboard" 
-        element={
-          <ProtectedRoute>
-            <DashboardShell 
-              urls={urls}
-              urlsLoading={urlsLoading}
-              setUrls={setUrls}
-              fetchUrls={fetchUrls}
-              sidebarCollapsed={sidebarCollapsed}
-              setSidebarCollapsed={setSidebarCollapsed}
-              profileDropdownOpen={profileDropdownOpen}
-              setProfileDropdownOpen={setProfileDropdownOpen}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              activeSection={activeSection}
-              setActiveSection={setActiveSection}
-              currentView={currentView}
-              setCurrentView={setCurrentView}
-              navigateToSection={navigateToSection}
-            />
-          </ProtectedRoute>
-        } 
-      />
-      {/* Fallback routing */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/" element={<PublicLayout><Landing /></PublicLayout>} />
+        <Route path="/login" element={<PublicLayout><LoginPage /></PublicLayout>} />
+        <Route path="/signup" element={<PublicLayout><SignupPage /></PublicLayout>} />
+        <Route path="/verify-otp" element={<PublicLayout><VerifyOtpPage /></PublicLayout>} />
+        <Route path="/forgot-password" element={<PublicLayout><ForgotPasswordPage /></PublicLayout>} />
+        <Route path="/reset-password" element={<PublicLayout><ResetPasswordPage /></PublicLayout>} />
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <DashboardShell 
+                urls={urls}
+                urlsLoading={urlsLoading}
+                setUrls={setUrls}
+                fetchUrls={fetchUrls}
+                sidebarCollapsed={sidebarCollapsed}
+                setSidebarCollapsed={setSidebarCollapsed}
+                profileDropdownOpen={profileDropdownOpen}
+                setProfileDropdownOpen={setProfileDropdownOpen}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                activeSection={activeSection}
+                setActiveSection={setActiveSection}
+                currentView={currentView}
+                setCurrentView={setCurrentView}
+                navigateToSection={navigateToSection}
+              />
+            </ProtectedRoute>
+          } 
+        />
+        {/* Fallback routing */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 };
 
